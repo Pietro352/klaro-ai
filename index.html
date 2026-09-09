@@ -949,25 +949,25 @@
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
         }
 
-        /* Gemini-inspired workspace */
+        /* Gemini-inspired workspace (Dark Theme Unified) */
         :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f0f4f9;
-            --bg-card: #ffffff;
-            --accent: #1a73e8;
-            --accent-light: #4c8df6;
-            --accent-glow: transparent;
-            --text-primary: #1f1f1f;
-            --text-secondary: #444746;
-            --text-muted: #747775;
-            --border: #e4e7eb;
-            --border-light: #dfe3e7;
-            --user-bubble: #e9eef6;
+            --bg-primary: #010102;
+            --bg-secondary: #10121b;
+            --bg-card: #181a24;
+            --accent: #304ba8;
+            --accent-light: #8da6ff;
+            --accent-glow: rgba(124, 58, 237, 0.2);
+            --text-primary: #f2f2f4;
+            --text-secondary: #e2e2ec;
+            --text-muted: #a6a6ad;
+            --border: rgba(255, 255, 255, 0.14);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --user-bubble: #25262b;
             --ai-bubble: transparent;
-            --success: #1e8e5a;
-            --glass-bg: #ffffff;
-            --glass-border: transparent;
-            --glass-shadow: none;
+            --success: #22c55e;
+            --glass-bg: rgba(24, 26, 36, 0.96);
+            --glass-border: rgba(255, 255, 255, 0.14);
+            --glass-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 20px rgba(124, 58, 237, 0.15);
             --radius: 18px;
             --radius-lg: 24px;
             --radius-xl: 28px;
@@ -1760,6 +1760,8 @@
             border-radius: 42px;
             background: var(--surface);
             box-shadow: 0 14px 50px rgba(0,0,0,.22);
+            display: flex !important;
+            align-items: center !important;
         }
         .input-area:focus-within {
             border-color: #3a3b43;
@@ -1771,6 +1773,12 @@
             height: 46px;
             min-width: 46px;
             color: #eeeeF2;
+            align-self: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-top: auto !important;
+            margin-bottom: auto !important;
         }
         .attach-btn:hover { color: #fff; background: #303138; }
         .input-wrapper { padding: 8px 2px; }
@@ -1818,6 +1826,181 @@
             transition: opacity .22s ease;
         }
         .history-backdrop.open { opacity: 1; pointer-events: auto; }
+
+        /* Replace star icon ✦ with Klaro SVG bolt for assistant avatar */
+        .message.ai .msg-avatar::before {
+            content: '' !important;
+            display: block !important;
+            width: 16px !important;
+            height: 16px !important;
+            background-color: #a78bfa !important;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") no-repeat center / contain !important;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") no-repeat center / contain !important;
+        }
+
+        /* ── UNIFIED DARK THEME POPUPS & MODALS ── */
+        .modal-box {
+            background: rgba(22, 24, 32, 0.96) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 24px !important;
+            color: #f1f1f5 !important;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 24px rgba(124, 58, 237, 0.12) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+        }
+        .modal-box h3, .modal-box h2 { color: #ffffff !important; }
+        .modal-box .modal-sub { color: #a0a0b0 !important; }
+        .modal-close { color: #a0a0b0 !important; }
+        .modal-close:hover { background: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; }
+        .compare-table th { color: #8c8c9e !important; border-bottom-color: rgba(255, 255, 255, 0.1) !important; }
+        .compare-table td { color: #e0e0e8 !important; border-bottom-color: rgba(255, 255, 255, 0.07) !important; }
+
+        /* Unified Attach Menu Popup (+) */
+        .attach-menu {
+            background: rgba(24, 26, 36, 0.96) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 20px rgba(124, 58, 237, 0.15) !important;
+            padding: 8px !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+        }
+        .attach-menu button {
+            color: #e2e2ec !important;
+            border-radius: 12px !important;
+            padding: 10px 14px !important;
+            transition: all 0.2s ease !important;
+        }
+        .attach-menu button:hover {
+            background: rgba(124, 58, 237, 0.22) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 14px rgba(124, 58, 237, 0.25) !important;
+        }
+        .attach-menu button svg { stroke: #a78bfa !important; }
+        .attach-menu hr { border-top: 1px solid rgba(255, 255, 255, 0.1) !important; }
+
+        /* Model Dropdown Menu */
+        .model-menu {
+            background: rgba(24, 26, 36, 0.96) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 20px rgba(124, 58, 237, 0.12) !important;
+            backdrop-filter: blur(16px) !important;
+            color: #f1f1f5 !important;
+        }
+        .model-menu button { color: #e2e2ec !important; border-radius: 10px !important; }
+        .model-menu button:hover { background: rgba(124, 58, 237, 0.18) !important; color: #ffffff !important; }
+        .model-menu button small { color: #9090a0 !important; }
+
+        /* Skill, Connector, Project Items */
+        .skill-item, .connector-item, .project-item {
+            background: rgba(30, 33, 46, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f1f1f5 !important;
+            border-radius: 16px !important;
+            transition: all 0.2s ease !important;
+        }
+        .skill-item:hover, .project-item:hover {
+            border-color: rgba(167, 139, 250, 0.5) !important;
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.15) !important;
+        }
+        .skill-item.active {
+            background: rgba(124, 58, 237, 0.2) !important;
+            border-color: #a78bfa !important;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.3) !important;
+        }
+        .skill-icon, .connector-icon {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #a78bfa !important;
+        }
+        .connector-item input, .project-new-row input, .project-item input[type="text"] {
+            background: rgba(18, 20, 28, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            color: #f1f1f5 !important;
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: rgba(18, 20, 28, 0.96) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f1f1f5 !important;
+            backdrop-filter: blur(20px) !important;
+        }
+        .history-panel-header h2 { color: #ffffff !important; }
+        .history-new {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2)) !important;
+            border: 1px solid rgba(167, 139, 250, 0.3) !important;
+            color: #ffffff !important;
+            transition: all 0.2s ease !important;
+        }
+        .history-new:hover {
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.3) !important;
+            border-color: #a78bfa !important;
+        }
+        .history-item {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            color: #e2e2ec !important;
+            border-radius: 14px !important;
+            transition: all 0.2s ease !important;
+        }
+        .history-item:hover, .history-item.active {
+            background: rgba(124, 58, 237, 0.18) !important;
+            border-color: rgba(167, 139, 250, 0.4) !important;
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.2) !important;
+        }
+        .history-item-title { color: #ffffff !important; }
+        .history-item-meta { color: #9090a0 !important; }
+        .toast {
+            background: rgba(24, 26, 36, 0.96) !important;
+            border: 1px solid rgba(167, 139, 250, 0.3) !important;
+            color: #ffffff !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(124, 58, 237, 0.2) !important;
+        }
+
+        /* Binary Loading Indicator Styling */
+        .msg-avatar.logo-loader-avatar {
+            width: 30px !important;
+            height: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(59, 130, 246, 0.3)) !important;
+            border: 1px solid rgba(167, 139, 250, 0.5) !important;
+            border-radius: 50% !important;
+            color: #a78bfa !important;
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.4) !important;
+            animation: loaderPulse 2s infinite ease-in-out !important;
+        }
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(124, 58, 237, 0.4); }
+            50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(167, 139, 250, 0.7); }
+        }
+        .binary-loader-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #4ade80;
+            padding: 4px 6px;
+            text-shadow: 0 0 6px rgba(74, 222, 128, 0.4), 0 0 12px rgba(34, 197, 94, 0.3);
+        }
+        .binary-loader-cursor {
+            display: inline-block;
+            width: 6px;
+            height: 1.1em;
+            background: #22c55e;
+            border-radius: 1px;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+            animation: binaryCursorBlink 0.7s infinite;
+        }
+        @keyframes binaryCursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
         .history-panel,
         .history-backdrop.open .history-panel {
             width: min(88vw, 340px);
@@ -1978,7 +2161,7 @@
         .btn-upgrade:disabled { opacity: .6; cursor: wait; transform: none; }
         .modal-note { font-size: .76rem; color: var(--text-muted); margin-top: 10px; text-align: center; }
 
-        .attach-menu-wrap { position: relative; }
+        /* removed duplicate attach-menu-wrap */
         .attach-menu {
             position: absolute; bottom: calc(100% + 10px); left: 0; min-width: 240px;
             background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 16px;
@@ -2071,6 +2254,27 @@
             opacity: 0; pointer-events: none; transition: var(--transition); z-index: 300; display: flex; align-items: center; gap: 8px;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Green Terminal Logo for New Chat and Loading */
+        .terminal-logo-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #22c55e;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.6), inset 0 0 5px rgba(255,255,255,0.4);
+            color: #000;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -1px;
+            padding-left: 1px;
+        }
+        
+        .attach-menu-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -2114,8 +2318,10 @@
                         <h3 translate="no">Klaro AI</h3>
                     </div>
                 <div class="chat-header-actions">
-                    <button class="btn-icon" title="Nuova chat" onclick="newChat()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                    <button class="btn-icon new-chat-btn" title="Nuova chat" onclick="newChat()">
+                        <div class="terminal-logo-icon">
+                            <span>&gt;_</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -2129,19 +2335,17 @@
 
             <div class="active-skill-chip" id="activeSkillChip">
                 <span id="activeSkillChipLabel"></span>
-                <button type="button" onclick="clearSkill()" title="Rimuovi competenza" aria-label="Rimuovi competenza">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                </button>
+                <button type="button" onclick="clearSkill()" aria-label="Rimuovi competenza">✕</button>
             </div>
             <div class="input-area">
                 <div class="attach-menu-wrap">
                     <button class="attach-btn" onclick="toggleAttachMenu(event)" title="Aggiungi" aria-haspopup="true" aria-expanded="false" id="attachBtn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
                     <div class="attach-menu" id="attachMenu" role="menu" aria-label="Aggiungi contenuti">
-                        <button type="button" onclick="closeAttachMenu(); document.getElementById('fileInput').click();">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 014.95 4.95l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                            Aggiungi file o foto
+                        <button type="button" onclick="document.getElementById('fileInput').click(); closeAttachMenu();">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                            Allega file
                         </button>
                         <button type="button" onclick="closeAttachMenu(); captureScreenshot();">
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -2257,6 +2461,18 @@
                 <div style="margin-top:14px"><button class="btn-upgrade" onclick="closeModal('connectorsModal'); openUpgradeModal();">Passa a Max</button></div>
             </div>
             <div class="connector-list" id="connectorsList"></div>
+
+            <div class="groq-key-card" style="margin-top:16px; padding: 14px; background: rgba(30, 33, 46, 0.6); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-weight: 600; color: #fff; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 2l-2 2m-2-2l2 2M3 11l18-5-5 18-3-7-7-3z"/></svg>
+                    Chiave API Groq (Titoli Chat)
+                </div>
+                <div style="font-size: 0.78rem; color: #a0a0b0; margin-bottom: 10px;">Inserisci la tua API Key di Groq per generare riassunti automatici e veloci dei titoli nella cronologia.</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="password" id="groqApiKeyInput" placeholder="gsk_..." style="flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(18,20,28,0.8); color: #fff; font-size: 0.85rem;" />
+                    <button type="button" onclick="saveGroqApiKey()" style="padding: 8px 16px; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer;">Salva</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2296,6 +2512,58 @@
         let puterMaxActive = localStorage.getItem('klaro-max-active') === '1';
         if (selectedModel !== 'image' && !puterMaxActive && ['maxchat', 'maxthink'].includes(selectedModel)) {
             selectedModel = 'light'; // se non è più sbloccato, torna a Free
+        }
+
+        // ── GROQ API TITLE GENERATION ──
+        let groqApiKey = localStorage.getItem('groq_api_key') || '';
+
+        function saveGroqApiKey() {
+            const input = document.getElementById('groqApiKeyInput');
+            if (input) {
+                groqApiKey = input.value.trim();
+                localStorage.setItem('groq_api_key', groqApiKey);
+                showToast('Chiave API Groq salvata con successo!');
+            }
+        }
+
+        async function generateGroqTitle(userQuestion) {
+            if (!userQuestion || !userQuestion.trim()) return 'Nuova chat';
+            const cleanQuestion = userQuestion.replace(/\s+/g, ' ').trim();
+            const words = cleanQuestion.split(' ');
+            const fallbackTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '');
+
+            const keyToUse = groqApiKey || localStorage.getItem('groq_api_key');
+            if (!keyToUse) return fallbackTitle;
+
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${keyToUse}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.1-8b-instant',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Sei un assistente che genera un titolo sintetico in italiano per una chat basandoti sulla prima domanda dell\'utente. Il titolo deve essere un micro-riassunto di massimo 4-6 parole, senza punti, senza virgolette e d\'impatto. Rispondi ESCLUSIVAMENTE con il titolo.'
+                            },
+                            { role: 'user', content: cleanQuestion }
+                        ],
+                        max_tokens: 25,
+                        temperature: 0.5
+                    })
+                });
+
+                if (!response.ok) throw new Error('Groq API HTTP error');
+                const data = await response.json();
+                const title = data.choices?.[0]?.message?.content?.trim();
+                return title ? title.replace(/^["']|["']$/g, '').slice(0, 65) : fallbackTitle;
+            } catch (err) {
+                console.warn('Groq title generation failed, using fallback summary:', err);
+                return fallbackTitle;
+            }
         }
 
         function showToast(message, ms = 3200) {
@@ -2353,29 +2621,11 @@
             expert: 'esperta',
             vision: 'visione'
         };
-        const suggestions = [
-            { prompt: 'Scrivimi una poesia sul futuro', label: 'Scrivi una poesia sul futuro' },
-            { prompt: 'Spiegami la relatività in parole semplici', label: 'Spiega un concetto complesso' },
-            { prompt: 'Quali sono le buone pratiche per programmare?', label: 'Analizza e migliora del codice' },
-            { prompt: 'Raccontami una storia divertente', label: 'Genera una storia originale' }
-        ];
 
-        // Refined prompts for each mode
         const systemPrompts = {
-            instant: `You are Klaro AI, a friendly and concise multilingual assistant.
-- Answer clearly and directly. Use simple, clean text.
-- Always answer in the same language used by the user's latest message. If the user writes in Italian, answer in Italian.
-- Do not overuse bold text, headings, or asterisks.
-- If the user asks for code, ALWAYS wrap it between \`\`\` and \`\`\` so it appears in a highlighted block.`,
-            expert: `You are Klaro AI, an expert and technical multilingual assistant.
-- Provide detailed answers with explanations, examples, and code when useful.
-- Always answer in the same language used by the user's latest message. If the user writes in Italian, answer in Italian.
-- Use markdown ONLY for code (wrapped between \`\`\`), bullet lists (-), and headings only when the answer is long and structured.
-- Do not overuse bold or italics. Use ** only to highlight very important concepts.`,
-            vision: `You are Klaro AI, a multilingual assistant in vision mode.
-- When the user asks for an image, briefly describe what will be generated in the same language used by the user.
-- The image-generation backend may translate the image prompt to English internally, but user-facing chat replies must stay in the user's language.
-- Do not use markdown formatting.`
+            instant: `You are Klaro AI, a friendly and concise multilingual assistant.`,
+            expert: `You are Klaro AI, an expert and technical multilingual assistant.`,
+            vision: `You are Klaro AI, a multilingual assistant in vision mode.`
         };
 
         let conversationHistory = [
@@ -2427,7 +2677,6 @@
             }
             selectedModel = model;
             localStorage.setItem('klaro-selected-model', selectedModel);
-            switchTab(model === 'image' ? 'vision' : 'instant');
             renderModelTier();
             closeModelMenu();
         }
@@ -2444,7 +2693,9 @@
 
         function conversationTitle(messages) {
             const firstUserMessage = messages.find((message) => message.role === 'user')?.content || 'Nuova chat';
-            return firstUserMessage.replace(/\s+/g, ' ').slice(0, 58);
+            const cleanText = firstUserMessage.replace(/\s+/g, ' ').trim();
+            const words = cleanText.split(' ');
+            return words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '');
         }
 
         function readStoredConversations() {
@@ -2454,26 +2705,15 @@
 
                 return stored.flatMap((conversation) => {
                     if (!conversation || typeof conversation !== 'object') return [];
-                    if (!/^[a-zA-Z0-9-]{16,80}$/.test(String(conversation.id || ''))) return [];
-
-                    const messages = Array.isArray(conversation.messages)
-                        ? conversation.messages.flatMap((message) => {
-                            const role = message?.role === 'assistant' ? 'assistant' : message?.role === 'user' ? 'user' : null;
-                            const content = typeof message?.content === 'string' ? message.content.trim() : '';
-                            return role && content ? [{ role, content }] : [];
-                        })
-                        : [];
-
                     return [{
                         id: conversation.id,
                         title: typeof conversation.title === 'string' ? conversation.title.slice(0, 80) : 'Nuova chat',
-                        mode: ['instant', 'expert', 'vision'].includes(conversation.mode) ? conversation.mode : 'instant',
-                        messages,
+                        mode: conversation.mode || 'instant',
+                        messages: Array.isArray(conversation.messages) ? conversation.messages : [],
                         updatedAt: conversation.updatedAt || new Date().toISOString()
                     }];
                 }).slice(0, 20);
             } catch (error) {
-                console.warn('Cronologia locale non leggibile', error);
                 return [];
             }
         }
@@ -2484,22 +2724,43 @@
 
         function saveCurrentConversation() {
             const messages = serializableMessages();
-            if (!messages.some((message) => message.role === 'user')) return;
+            const firstUserMsgObj = messages.find((message) => message.role === 'user');
+            if (!firstUserMsgObj) return;
 
             try {
+                const existingConvs = readStoredConversations();
+                const existingConv = existingConvs.find(c => c.id === currentConversationId);
+                const initialTitle = existingConv?.title || conversationTitle(messages);
+
                 const savedConversation = {
                     id: currentConversationId,
-                    title: conversationTitle(messages),
+                    title: initialTitle,
                     mode: activeMode,
                     messages,
                     updatedAt: new Date().toISOString()
                 };
                 recentConversations = [
                     savedConversation,
-                    ...readStoredConversations().filter((conversation) => conversation.id !== currentConversationId)
+                    ...existingConvs.filter((conversation) => conversation.id !== currentConversationId)
                 ].slice(0, 20);
                 storeConversations(recentConversations);
                 renderRecentConversations();
+
+                if (firstUserMsgObj.content && (!existingConv || existingConv.title === conversationTitle(messages))) {
+                    const convIdToUpdate = currentConversationId;
+                    generateGroqTitle(firstUserMsgObj.content).then(aiTitle => {
+                        if (aiTitle && aiTitle !== initialTitle) {
+                            const stored = readStoredConversations();
+                            const target = stored.find(c => c.id === convIdToUpdate);
+                            if (target) {
+                                target.title = aiTitle;
+                                storeConversations(stored);
+                                recentConversations = stored;
+                                renderRecentConversations();
+                            }
+                        }
+                    });
+                }
             } catch (error) {
                 console.warn('Cronologia non salvata', error);
             }
@@ -2508,6 +2769,8 @@
         function loadRecentConversations() {
             recentConversations = readStoredConversations();
             renderRecentConversations();
+            const input = document.getElementById('groqApiKeyInput');
+            if (input && groqApiKey) input.value = groqApiKey;
         }
 
         function escapeHtml(value) {
@@ -2518,40 +2781,26 @@
 
         function formatConversationDate(value) {
             const date = new Date(value);
-            if (Number.isNaN(date.getTime())) return 'Recentemente';
             return new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
         }
 
         function renderRecentConversations() {
             if (!recentConversations.length) {
-                historyList.innerHTML = '<div class="history-state"><strong>Nessuna chat recente</strong>Inizia una conversazione e la troverai qui.</div>';
+                historyList.innerHTML = '<div class="history-state">Nessuna chat recente.</div>';
                 return;
             }
 
             historyList.innerHTML = recentConversations.map((conversation) => `
-                <div class="history-item ${conversation.id === currentConversationId ? 'active' : ''}" role="button" tabindex="0"
-                    onclick="openConversation('${conversation.id}')" onkeydown="handleConversationKey(event, '${conversation.id}')">
+                <div class="history-item ${conversation.id === currentConversationId ? 'active' : ''}" onclick="openConversation('${conversation.id}')">
                     <span class="history-item-title">${escapeHtml(conversation.title || 'Nuova chat')}</span>
-                    <span class="history-item-meta">${escapeHtml(modeLabels[conversation.mode] || 'rapida')} · ${formatConversationDate(conversation.updatedAt)}</span>
-                    <button class="history-delete" type="button" aria-label="Elimina chat" onclick="deleteConversation(event, '${conversation.id}')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M8 11v7M12 11v7M16 11v7M6 7l1 14h10l1-14"/></svg>
-                    </button>
+                    <span class="history-item-meta">${formatConversationDate(conversation.updatedAt)}</span>
                 </div>`).join('');
-        }
-
-        function handleConversationKey(event, id) {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openConversation(id);
-            }
         }
 
         function openHistory() {
             historyBackdrop.classList.add('open');
             historyBackdrop.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
             loadRecentConversations();
-            syncHistoryAccessibility();
         }
 
         function closeHistory() {
@@ -2726,17 +2975,82 @@
             return text;
         }
 
-        function showTyping() {
-            removeWelcome();
-            const div = document.createElement('div');
-            div.className = 'message ai';
-            div.id = 'typing';
-            div.innerHTML = '<div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span><span></span><span></span></div></div>';
-            messagesArea.appendChild(div);
-            scrollBottom();
+        // ── BINARY LOADER & TYPING INDICATOR ──
+        let binaryTypingTimer = null;
+
+        function stopBinaryTyping() {
+            if (binaryTypingTimer) {
+                clearTimeout(binaryTypingTimer);
+                binaryTypingTimer = null;
+            }
         }
 
-        function hideTyping() { const el = document.getElementById('typing'); if (el) el.remove(); }
+        function startBinaryTyping() {
+            const targetBinary = "11011010001010";
+            const targetAsterisks = "**************";
+            let index = 0;
+            let isAsterisksState = false;
+
+            function typeStep() {
+                const textEl = document.getElementById('binaryLoaderText');
+                if (!textEl) return;
+
+                if (!isAsterisksState) {
+                    if (index < targetBinary.length) {
+                        index++;
+                        textEl.textContent = targetBinary.slice(0, index);
+                        binaryTypingTimer = setTimeout(typeStep, 65);
+                    } else {
+                        binaryTypingTimer = setTimeout(() => {
+                            const textEl2 = document.getElementById('binaryLoaderText');
+                            if (textEl2) textEl2.textContent = targetAsterisks;
+                            isAsterisksState = true;
+                            binaryTypingTimer = setTimeout(() => {
+                                index = 0;
+                                isAsterisksState = false;
+                                const textEl3 = document.getElementById('binaryLoaderText');
+                                if (textEl3) textEl3.textContent = "";
+                                typeStep();
+                            }, 2000);
+                        }, 400);
+                    }
+                }
+            }
+
+            typeStep();
+        }
+
+        function showTyping() {
+            removeWelcome();
+            stopBinaryTyping();
+
+            const div = document.createElement('div');
+            div.className = 'message ai typing-message';
+            div.id = 'typing';
+            div.innerHTML = `
+                <div class="msg-avatar logo-loader-avatar" style="background: transparent;">
+                    <div class="terminal-logo-icon">
+                        <span>&gt;_</span>
+                    </div>
+                </div>
+                <div class="msg-bubble">
+                    <div class="binary-loader-container">
+                        <span class="binary-loader-text" id="binaryLoaderText"></span>
+                        <span class="binary-loader-cursor"></span>
+                    </div>
+                </div>
+            `;
+            messagesArea.appendChild(div);
+            scrollBottom();
+
+            startBinaryTyping();
+        }
+
+        function hideTyping() {
+            stopBinaryTyping();
+            const el = document.getElementById('typing');
+            if (el) el.remove();
+        }
 
         function downloadWithWatermark(imgId, dlName) {
             const imgSrc = imageStore[imgId];
