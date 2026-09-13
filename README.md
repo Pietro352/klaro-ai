@@ -1,93 +1,68 @@
 # Klaro AI
 
-Un'interfaccia di chat AI moderna, veloce e deployabile su GitHub Pages in pochi minuti.
+Un'interfaccia di chat AI moderna, veloce e deployabile su GitHub Pages.
 
 ## Stack
 
 - **Frontend** — HTML/CSS/JS vanilla, zero framework, zero build step
-- **Backend** — Client-side (nessun backend richiesto)
-- **LLM** — [Groq](https://groq.com) (`mixtral-8x7b-32768` / `llama-3.1-70b-versatile`)
+- **LLM** — [Groq](https://groq.com)
 - **Image generation** — [Pollinations](https://pollinations.ai)
 - **Klaro Max** — [Puter.js](https://puter.com) (client-side, nessuna chiave)
 
 ## Avvio rapido
 
-### 1 — Clona e installa
+### 1 — Clona il repo
 
 ```bash
-git clone https://github.com/tuo-username/klaro-ai.git
+git clone https://github.com/Pietro352/klaro-ai.git
 cd klaro-ai
 ```
 
-### 2 — Configurazione locale
+### 2 — Configura il secret su GitHub
 
-Apri `index.html` nel browser. Al primo accesso, verrà richiesto di inserire:
-- **GROQ_API_KEY** — Chiave API da [groq.com](https://console.groq.com)
-- (Opzionale) **POLLINATIONS_API_KEY** — Per la generazione avanzata di immagini
+1. Vai su **Settings → Secrets and variables → Actions**
+2. Clicca **New repository secret**
+3. Nome: `GROQ_API_KEY`
+4. Valore: la tua chiave da [console.groq.com](https://console.groq.com)
+5. Clicca **Add secret**
 
-La chiave viene salvata nel `localStorage` del browser (solo locale, non sincronizzata).
+### 3 — Deploy
 
-### 3 — Avvia in locale
+Il sito si deploya automaticamente su GitHub Pages quando fai un push su `main`.
 
-Opzione 1 — Apri direttamente il file:
+Url: `https://[username].github.io/klaro-ai`
+
+## Sviluppo locale
+
+Apri `index.html` nel browser. **Nota:** in locale la chiave API non è iniettata (è solo nel deploy via GitHub Pages).
+
+Se vuoi testarla in locale:
+
 ```bash
-# Su macOS
-open index.html
+# 1. Copia index.html
+cp index.html index.local.html
 
-# Su Linux/Windows, apri manualmente in browser
-```
+# 2. Sostituisci __GROQ_API_KEY__ manualmente con la tua chiave
+# (o usa sed)
 
-Opzione 2 — Usa un server locale (consigliato):
-```bash
-# Con Python 3
+# 3. Apri in un server locale:
 python -m http.server 8000
-
-# Con Node.js
-npx http-server
-
-# Con Ruby
-ruby -run -ehttpd . -p8000
 ```
 
-Poi apri [http://localhost:8000](http://localhost:8000).
+Poi accedi a `http://localhost:8000/index.local.html`
 
-## Deploy su GitHub Pages
-
-1. **Assicurati che il repo sia pubblico**
-2. Vai su **Settings → Pages**
-3. Seleziona **Branch: main** (o il tuo default) e **Folder: / (root)**
-4. Clicca **Save**
-
-Il sito sarà disponibile a: `https://[username].github.io/klaro-ai`
-
-**Nota sulla sicurezza:** La GROQ_API_KEY viene salvata nel `localStorage` del browser locale. Su GitHub Pages:
-- La chiave NON è esposta pubblicamente (rimane solo nel tuo browser)
-- Ciascun utente che accede al sito deve inserire la propria chiave API
-- Per un'istanza condivisa o pubblica, valuta un'alternativa (backend proxy, Vercel, ecc.)
-
-## Struttura del progetto
+## Struttura
 
 ```
 klaro-ai/
-├── index.html                   # Frontend completo (single-file app)
-├── favicon.png / favicon.svg    # Icone
+├── index.html                # Frontend (chiave iniettata al deploy)
+├── favicon.svg / favicon.png # Icone
 ├── api/
-│   └── chat.js                  # Wrapper Groq client-side
+│   └── chat.js              # Wrapper Groq client-side
+├── .github/workflows/
+│   └── deploy.yml           # GitHub Actions workflow
 └── README.md
 ```
-
-## Klaro Max (nuovo)
-
-Aggiunta la modalità **Klaro Max**, basata su [Puter.js](https://puter.com) — nessuna chiave API, nessun backend: paga l'utente col proprio account Puter gratuito.
-
-- **Klaro Free** — modello attuale (Groq via `/api/chat.js`), sempre gratis.
-- **Klaro Max** / **Klaro Max Think** — modelli più potenti (quest'ultimo con ragionamento visibile in un blocco "💭 Ragionamento" collassabile).
-- **Klaro Image** — usa il motore Free (Pollinations) di base; se Max è attivo passa in automatico a un motore di qualità superiore via Puter, con fallback automatico su Free in caso di errore.
-- **Passa a Max** — bottone nel menu modelli e modale con tabella comparativa; apre il popup di login/registrazione Puter (`puter.auth.signIn()`), gratuito.
-- **Menu "+"** (in stile Claude/Gemini): allega file/foto, acquisisci screenshot (via `getDisplayMedia`), aggiungi la chat a un progetto (raggruppamento locale), scegli una "competenza" (persona/specialista).
-- **Connettori (solo Max)** — GitHub (token personale, elenca i repo), Todoist (token API, elenca le attività), Gmail (richiede un Client ID OAuth Google creato da te su console.cloud.google.com).
-
-Tutto vive in `index.html`: nessun file/funzione aggiuntiva da deployare.
 
 ## Ottenere la GROQ_API_KEY
 
@@ -96,7 +71,15 @@ Tutto vive in `index.html`: nessun file/funzione aggiuntiva da deployare.
 3. Vai a **Keys** (nella sidebar)
 4. Clicca **Create API Key**
 5. Copia la chiave
-6. Incollala in Klaro AI quando richiesto
+6. Mettila nei GitHub Secrets come `GROQ_API_KEY`
+
+## Klaro Max
+
+- **Klaro Free** — Groq LLM, gratis
+- **Klaro Max** / **Klaro Max Think** — Modelli Puter.js (utente paga col suo account Puter)
+- **Klaro Image** — Pollinations (Free) + Puter (Max)
+
+Tutto vive in `index.html`: nessun backend da deployare.
 
 ## Licenza
 
