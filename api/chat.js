@@ -1,5 +1,7 @@
-// Client-side Groq API wrapper (da usare in index.html)
-// Groq API KEY deve essere configurata come variabile d'ambiente del browser
+// Client-side Groq API wrapper
+// Chiave API iniettata da GitHub Actions workflow
+
+const GROQ_API_KEY = '__GROQ_API_KEY__';
 
 const MODELS = {
   light: 'mixtral-8x7b-32768',
@@ -7,9 +9,8 @@ const MODELS = {
 };
 
 async function callGroqAPI(messages, modelTier = 'light') {
-  const apiKey = localStorage.getItem('groq_api_key');
-  if (!apiKey) {
-    throw new Error('GROQ_API_KEY non configurata. Aggiungi la chiave nelle impostazioni.');
+  if (!GROQ_API_KEY || GROQ_API_KEY === '__GROQ_API_KEY__') {
+    throw new Error('GROQ_API_KEY non configurata. Aggiungi il secret GROQ_API_KEY nei GitHub Secrets.');
   }
 
   const model = MODELS[modelTier] || MODELS.light;
@@ -19,7 +20,7 @@ async function callGroqAPI(messages, modelTier = 'light') {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
+        Authorization: `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
         model,
