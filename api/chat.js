@@ -1,32 +1,21 @@
-// Vercel Serverless Function — POST /api/chat
-// Riceve { messages, modelTier } dal frontend e interroga Groq.
-// Richiede la variabile d'ambiente GROQ_API_KEY (Project Settings → Environment Variables).
+// Client-side Groq API wrapper (da usare in index.html)
+// Groq API KEY deve essere configurata come variabile d'ambiente del browser
 
 const MODELS = {
-  light: 'openai/gpt-oss-20b',
-  pro: 'openai/gpt-oss-120b'
+  light: 'mixtral-8x7b-32768',
+  pro: 'llama-3.1-70b-versatile'
 };
 
-module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Metodo non consentito' });
+async function callGroqAPI(messages, modelTier = 'light') {
+  const apiKey = localStorage.getItem('groq_api_key');
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY non configurata. Aggiungi la chiave nelle impostazioni.');
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'GROQ_API_KEY non configurata su Vercel' });
-  }
+  const model = MODELS[modelTier] || MODELS.light;
 
   try {
-    const { messages, modelTier } = req.body || {};
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'Parametro "messages" mancante o non valido' });
-    }
-
-    const model = MODELS[modelTier] || MODELS.light;
-
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,17 +29,17 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    const data = await groqResponse.json();
-
-    if (!groqResponse.ok) {
-      const message = data?.error?.message || 'Errore dal servizio Groq';
-      return res.status(groqResponse.status).json({ error: message });
+    if (!response.ok) {
+      const error = await response.json();
+      const message = error?.error?.message || 'Errore dal servizio Groq';
+      throw new Error(message);
     }
 
+    const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content?.trim() || 'Nessuna risposta.';
-    return res.status(200).json({ reply });
+    return { reply };
   } catch (error) {
-    console.error('Errore /api/chat:', error);
-    return res.status(500).json({ error: 'Servizio IA non disponibile. Riprova tra poco.' });
+    console.error('Errore Groq API:', error);
+    throw error;
   }
-};
+}
