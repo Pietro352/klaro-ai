@@ -23,7 +23,7 @@ jobs:
       - name: Sostituisci il placeholder con la chiave Groq
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: sed -i "s|__GROQ_API_KEY__|${GROQ_API_KEY}|g" index.html
+        run: sed -i "s|const GROQ_API_KEY = '__GROQ_API_KEY__';|const GROQ_API_KEY = '${GROQ_API_KEY}';|" index.html
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
