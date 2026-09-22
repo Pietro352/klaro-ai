@@ -5,7 +5,7 @@
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Klaro AI</title>
-    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://js.puter.com/v2/"></script>
@@ -2381,178 +2381,7 @@
         }
         
         .attach-menu-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
-    
-        /* ── Klaro UI refinement: quieter, denser, more professional ── */
-        .bg-orbs,
-        .grid-overlay { display: none !important; }
-
-        .navbar,
-        .toolbar,
-        .chat-card {
-            background: rgba(15, 15, 20, 0.94);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border-color: rgba(255,255,255,0.075);
-            border-radius: 18px;
-            box-shadow: 0 12px 34px rgba(0,0,0,0.28);
-        }
-
-        .navbar { padding: 11px 18px; margin-bottom: 8px; }
-        .toolbar { padding: 7px 10px; margin-bottom: 8px; }
-        .logo { gap: 10px; }
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: #6d3bd1;
-            box-shadow: none;
-        }
-        .logo-icon::after { display: none; }
-        .logo-text { font-size: 1.2rem; letter-spacing: -0.3px; }
-        .logo-text span {
-            background: none;
-            -webkit-text-fill-color: currentColor;
-            color: #f1f5f9;
-        }
-
-        .chat-card { border-radius: 20px; }
-        .chat-header {
-            padding: 13px 18px;
-            background: rgba(20,20,26,0.76);
-        }
-        .chat-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: #24242d;
-            box-shadow: none;
-        }
-        .btn-icon,
-        .history-trigger,
-        .mode-btn,
-        .chip {
-            box-shadow: none;
-        }
-
-        .welcome-block { padding: 28px 12px 18px; }
-        .welcome-icon { display: none !important; }
-        .welcome-block h2 {
-            font-size: 1.28rem;
-            letter-spacing: -0.55px;
-            background: none;
-            -webkit-text-fill-color: currentColor;
-            color: #f1f5f9;
-        }
-        .welcome-block p { max-width: 520px; color: #8f96a3; }
-
-        .message { max-width: 88%; gap: 7px; }
-        .message.ai .msg-avatar {
-            background: transparent;
-            border: 0;
-            color: #a78bfa;
-            box-shadow: none;
-        }
-        .message.ai .msg-avatar::before {
-            content: '' !important;
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            display: block !important;
-            background: currentColor;
-            box-shadow: none;
-        }
-
-        /* Single, calm breathing dot for generation. */
-        .typing-message { max-width: none; }
-        .typing-message .msg-bubble {
-            padding: 0;
-            border: 0;
-            background: transparent;
-        }
-        .typing-indicator {
-            display: inline-flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 0;
-            min-height: 28px;
-            padding: 7px 2px;
-        }
-        .typing-indicator span {
-            width: 7px !important;
-            height: 7px !important;
-            margin: 0 !important;
-            border-radius: 50%;
-            background: #b8a3ff !important;
-            box-shadow: 0 0 0 rgba(184,163,255,0) !important;
-            animation: klaroDotPulse 1.45s ease-in-out infinite !important;
-        }
-        .typing-indicator span:nth-child(n) { animation-delay: 0s !important; }
-        .typing-indicator span:not(:first-child) { display: none !important; }
-
-        @keyframes klaroDotPulse {
-            0%, 100% { transform: scale(0.68); opacity: 0.35; }
-            50% { transform: scale(1.35); opacity: 1; }
-        }
-
-        /* Image/file attachments live inside the user's message, not as a loose image below it. */
-        .message.user:has(.attachment-card) .msg-bubble {
-            padding: 0;
-            background: transparent;
-            border: 0;
-            box-shadow: none;
-            overflow: visible;
-        }
-        .attachment-card {
-            width: min(320px, 72vw);
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.11);
-            border-radius: 15px;
-            background: #18181e;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.22);
-        }
-        .attachment-card .attachment-preview {
-            display: block;
-            width: 100%;
-            max-height: 270px;
-            object-fit: cover;
-            margin: 0;
-            border-radius: 0;
-        }
-        .attachment-card .attachment-meta {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 10px 12px;
-            color: #d7d9df;
-            font-size: 0.78rem;
-            line-height: 1.25;
-        }
-        .attachment-card .attachment-icon {
-            width: 28px;
-            height: 28px;
-            flex: 0 0 28px;
-            display: grid;
-            place-items: center;
-            border-radius: 8px;
-            background: rgba(124,58,237,0.14);
-            color: #b8a3ff;
-        }
-        .attachment-card .attachment-name {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .msg-bubble img { margin: 0; }
-        .suggestion-chips { gap: 7px; }
-        .chip {
-            border-radius: 12px;
-            background: rgba(255,255,255,0.025);
-            border-color: rgba(255,255,255,0.09);
-        }
-
-</style>
+    </style>
 </head>
 <body>
     <div class="bg-orbs">
@@ -3413,21 +3242,24 @@ Rispondi SOLO con il titolo, nient'altro.`;
             removeWelcome();
             stopBinaryTyping();
 
-            const existing = document.getElementById('typing');
-            if (existing) existing.remove();
-
             const div = document.createElement('div');
             div.className = 'message ai typing-message';
             div.id = 'typing';
             div.innerHTML = `
+                <div class="msg-avatar logo-loader-avatar" style="background: transparent;">
+                    <span class="loader-avatar-label">AI</span>
+                </div>
                 <div class="msg-bubble">
-                    <div class="typing-indicator" aria-label="Klaro sta elaborando">
-                        <span></span>
+                    <div class="binary-loader-container">
+                        <span class="binary-loader-text" id="binaryLoaderText"></span>
+                        <span class="binary-loader-cursor"></span>
                     </div>
                 </div>
             `;
             messagesArea.appendChild(div);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            scrollBottom();
+
+            startBinaryTyping();
         }
 
         function hideTyping() {
@@ -3489,39 +3321,23 @@ Rispondi SOLO con il titolo, nient'altro.`;
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
             const reader = new FileReader();
 
             if (file.type.startsWith('image/')) {
                 reader.onload = function(e) {
                     const base64Data = e.target.result;
-                    const safeName = escapeHtml(file.name);
-                    const attachmentHtml = `
-                        <div class="attachment-card">
-                            <img class="attachment-preview" src="${base64Data}" alt="${safeName}">
-                            <div class="attachment-meta">
-                                <div class="attachment-icon" aria-hidden="true">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="3"></rect>
-                                        <circle cx="8.5" cy="8.5" r="1.4"></circle>
-                                        <path d="m21 15-4.2-4.2a1.5 1.5 0 0 0-2.1 0L7 18.5"></path>
-                                    </svg>
-                                </div>
-                                <div class="attachment-name" title="${safeName}">${safeName} · ${sizeMB} MB</div>
-                            </div>
-                        </div>`;
-
-                    addMessage('user', '', attachmentHtml);
+                    const msg = `[file] ${file.name} (${sizeMB} MB)`;
+                    addMessage('user', msg, `<br><img src="${base64Data}" style="max-width:200px; border-radius:8px; margin-top:8px;">`);
+                    
                     conversationHistory.push({
                         role: 'user',
                         content: [
-                            { type: 'text', text: `[Immagine allegata: ${file.name}]` },
+                            { type: 'text', text: `[File caricato: ${file.name}]` },
                             { type: 'image_url', image_url: { url: base64Data } }
                         ]
                     });
                     saveCurrentConversation();
-                    event.target.value = '';
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -3529,15 +3345,86 @@ Rispondi SOLO con il titolo, nient'altro.`;
                     const textContent = e.target.result;
                     const msg = `[file] ${file.name} (${sizeMB} MB)`;
                     addMessage('user', msg);
+                    
                     conversationHistory.push({
                         role: 'user',
-                        content: `[File caricato: "${file.name}"]\\n\\nContenuto del file:\\n\\`\\`\\`\\n${textContent}\\n\\`\\`\\``
+                        content: `[File caricato: "${file.name}"]\n\nContenuto del file:\n\`\`\`\n${textContent}\n\`\`\``
                     });
                     saveCurrentConversation();
-                    event.target.value = '';
                 };
                 reader.readAsText(file);
             }
+            event.target.value = '';
+        }
+
+        function switchTab(mode) {
+            if (processing) return;
+            currentConversationId = createConversationId();
+            activeMode = mode;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-mode="${mode}"]`)?.classList.add('active');
+
+            const isVision = mode === 'vision';
+            const modeToggle = document.querySelector('.mode-toggle');
+            if (modeToggle) modeToggle.style.display = isVision ? 'none' : 'grid';
+
+            // Load the mode-specific prompt
+            conversationHistory = [{ role: 'system', content: systemPrompts[mode] }];
+            clearSkill();
+
+            messagesArea.innerHTML = '';
+            const newWelcome = document.createElement('div');
+            newWelcome.className = 'welcome-block';
+            newWelcome.id = 'welcomeBlock';
+            newWelcome.innerHTML = `
+                <div class="welcome-spark" aria-hidden="true"></div>
+                <h2>Hai nuove idee<br>da esplorare?</h2>`;
+            messagesArea.appendChild(newWelcome);
+            welcomeBlock = newWelcome;
+        }
+
+        function toggleDeepThink() {
+            deepThink = !deepThink;
+            document.getElementById('deepThinkBtn').classList.toggle('active', deepThink);
+            const sys = conversationHistory.find(m => m.role === 'system');
+            if (sys) {
+                let base = sys.content.replace(' Think step by step before answering.', '');
+                sys.content = deepThink ? base + ' Think step by step before answering.' : base;
+            }
+        }
+
+        function toggleSearch() {
+            search = !search;
+            document.getElementById('searchBtn').classList.toggle('active', search);
+        }
+
+        function copyCode(id, btn) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const text = el.innerText || el.textContent || '';
+            const doFeedback = () => {
+                btn.textContent = '✓ Copiato';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = '📋 Copia'; btn.classList.remove('copied'); }, 2000);
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(doFeedback).catch(() => {});
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                doFeedback();
+            }
+        }
+
+        function suggestionChips() {
+            return suggestions.map((item) => {
+                const prompt = item.prompt.replace(/'/g, "\\'");
+                return `<button class="chip" type="button" onclick="sendSuggestion('${prompt}')">${item.label}</button>`;
+            }).join('');
         }
 
         function sendSuggestion(text) { userInput.value = text; sendMessage(); }
