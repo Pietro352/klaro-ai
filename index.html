@@ -3150,6 +3150,25 @@ Rispondi SOLO con il titolo, nient'altro.`;
             return reply || 'Nessuna risposta.';
         }
 
+        async function translatePromptForImage(prompt) {
+            // I modelli di generazione immagini rendono molto meglio con
+            // prompt in inglese: qui traduciamo/espandiamo brevemente quello
+            // dell'utente (in qualsiasi lingua) prima di generare la foto.
+            try {
+                if (window.puter) {
+                    const response = await puter.ai.chat([
+                        { role: 'system', content: 'Translate the user\'s image request into a short, vivid English prompt for an AI image generator. Keep all details, add none. Reply with ONLY the translated prompt, nothing else, no quotes.' },
+                        { role: 'user', content: prompt }
+                    ], false, { model: 'gemini-3-flash-preview' });
+                    const { text } = parsePuterChatResponse(response);
+                    if (text && text.trim()) return text.trim();
+                }
+            } catch (error) {
+                console.warn('Traduzione prompt immagine fallita, uso il testo originale.', error);
+            }
+            return prompt;
+        }
+
         async function generateImageWithAI(prompt) {
             // Klaro Image usa sempre Puter come motore principale (stessa qualità
             // per tutti, Max o Free): se Puter non è disponibile o fallisce,
@@ -3545,7 +3564,8 @@ Rispondi SOLO con il titolo, nient'altro.`;
                 showTyping();
                 const safePrompt = text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 try {
-                    const generatedImage = await generateImageWithAI(text);
+                    const imagePrompt = await translatePromptForImage(text);
+                    const generatedImage = await generateImageWithAI(imagePrompt);
                     hideTyping();
                     const imgSrc = mediaSourceFrom(generatedImage);
                     if (!imgSrc) throw new Error('L\'immagine generata non ha un URL utilizzabile');
@@ -3554,7 +3574,7 @@ Rispondi SOLO con il titolo, nient'altro.`;
                     const dlName = `klaro-ai-${Date.now()}.png`;
                     const imgId = 'img-' + Date.now();
                     imageStore[imgId] = imgSrc;
-                    addMessage('ai', reply, `<br>
+                    addMessage('ai', '', `
 <div class="generated-img-wrapper" onclick="this.classList.toggle('show-actions')">
   <img src="${imgSrc}" alt="${safePrompt}">
   <div class="img-actions-overlay">
