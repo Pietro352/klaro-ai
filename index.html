@@ -2681,7 +2681,7 @@ Rispondi SOLO con il titolo, nient'altro.`;
         let processing = false;
 
         // ── Klaro Max (Puter.js) ──────────────────────────────────────
-        const PUTER_MODELS = { maxchat: 'qwen/qwen3.8-max', maxthink: 'qwen/qwen3-max-thinking', image: 'gemini-3-pro-image' };
+        const PUTER_MODELS = { maxchat: 'qwen/qwen3.8-max', maxthink: 'qwen/qwen3-max-thinking', image: 'google/gemini-3.1-flash-image-preview' };
         let puterMaxActive = localStorage.getItem('klaro-max-active') === '1';
         if (selectedModel !== 'image' && !puterMaxActive && ['maxchat', 'maxthink'].includes(selectedModel)) {
             selectedModel = 'light'; // se non è più sbloccato, torna a Free
@@ -3151,16 +3151,19 @@ Rispondi SOLO con il titolo, nient'altro.`;
         }
 
         async function generateImageWithAI(prompt) {
-            if (puterMaxActive && window.puter) {
+            // Klaro Image usa sempre Puter come motore principale (stessa qualità
+            // per tutti, Max o Free): se Puter non è disponibile o fallisce,
+            // si passa a Pollinations solo come riserva.
+            if (window.puter) {
                 try {
                     const imgEl = await puter.ai.txt2img(prompt, { model: PUTER_MODELS.image });
                     const src = imgEl?.src || mediaSourceFrom(imgEl);
                     if (src) return { url: src };
                 } catch (error) {
-                    console.warn('Generazione immagine Max fallita, uso il motore Free come riserva.', error);
+                    console.warn('Generazione immagine con Puter fallita, uso il motore di riserva.', error);
                 }
             }
-            // Klaro Image (Free) — Pollinations è un endpoint pubblico, l'immagine
+            // Riserva — Pollinations è un endpoint pubblico, l'immagine
             // si genera direttamente nel browser dall'URL, nessuna chiave richiesta.
             const params = new URLSearchParams({
                 width: '1024',
