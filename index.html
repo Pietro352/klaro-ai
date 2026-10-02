@@ -2187,6 +2187,19 @@
         .usage-row.critical .usage-bar i { background: #ef4444; }
         @media (prefers-reduced-motion: reduce) { .usage-bar i { transition: none; } }
 
+        /* ── Interruttore qualità immagini ── */
+        .model-menu .quality-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 8px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .model-menu .quality-text { display: grid; gap: 2px; }
+        .model-menu .quality-text span { font-size: .85rem; font-weight: 500; color: #f1f1f5; }
+        .model-menu .quality-text small { font-size: .72rem; line-height: 1.3; color: #9090a0; }
+        .model-menu button.switch { display: block; position: relative; flex: none; width: 42px; min-height: 0; height: 24px; padding: 0; border: 0; border-radius: 12px !important; background: rgba(255, 255, 255, 0.18) !important; cursor: pointer; transition: background .15s ease; }
+        .model-menu button.switch:hover { background: rgba(255, 255, 255, 0.26) !important; }
+        .model-menu button.switch.on, .model-menu button.switch.on:hover { background: #819bff !important; }
+        .model-menu button.switch i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s ease; }
+        .model-menu button.switch.on i { transform: translateX(18px); }
+        .model-menu button.switch:focus-visible { outline: 2px solid #819bff; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { .model-menu button.switch, .model-menu button.switch i { transition: none; } }
+
         /* ── Trascina un file sulla pagina per allegarlo ── */
         .drop-overlay {
             position: fixed; inset: 0; z-index: 300;
@@ -2499,6 +2512,10 @@
                     <div class="effort-scale"><span>Budget</span><span>Intelligenza</span></div>
                     <p class="effort-hint" id="effortHint"></p>
                 </div>
+                <div class="quality-row" id="imageQualityRow" style="display:none">
+                    <div class="quality-text"><span>Qualità superiore</span><small>Usa i crediti Puter: consuma molto</small></div>
+                    <button type="button" class="switch" id="imageQualityToggle" role="switch" aria-checked="false" aria-label="Qualità superiore per le immagini" onclick="toggleImageQuality()"><i></i></button>
+                </div>
                 <div class="usage-row" id="usageRow"><span>Utilizzo <b id="usageLabel">basso</b></span><span class="usage-bar" aria-hidden="true"><i id="usageFill"></i></span></div>
                 <div class="upsell-row" id="upsellRow" onclick="openUpgradeModal()">✨ Passa a Max</div>
             </div>
@@ -2623,7 +2640,7 @@
                     <tr><td>Chat rapida quotidiana</td><td class="yes">Sì</td><td class="yes">Sì</td></tr>
                     <tr><td>Modello di punta (Klaro Max)</td><td class="no">No</td><td class="yes">Sì</td></tr>
                     <tr><td>Ragionamento esteso (Max Think)</td><td class="no">No</td><td class="yes">Sì</td></tr>
-                    <tr><td>Generazione immagini</td><td>Standard</td><td class="yes">Qualità superiore</td></tr>
+                    <tr><td>Generazione immagini</td><td>Standard</td><td class="yes">Qualità superiore (opzionale)</td></tr>
                     <tr><td>Contesto conversazione</td><td>Limitato</td><td class="yes">Molto ampio</td></tr>
                     <tr><td>Connettori (Gmail, GitHub, Todoist...)</td><td class="no">No</td><td class="yes">Sì</td></tr>
                     <tr><td>Costo</td><td class="yes">Gratis</td><td>Account gratuito richiesto</td></tr>
@@ -2712,8 +2729,15 @@
         // "fallback" = se Groq risponde che il modello non esiste / non è accessibile
         // con la tua chiave, si riprova in automatico con quello indicato.
         const GROQ_FALLBACK_MODEL = 'openai/gpt-oss-20b';
-        // Modello Groq con visione, usato quando nella chat c'è una foto (Turbo / Flash / Plus).
-        const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+        // Modelli Groq con visione, usati quando nella chat c'è una foto (Turbo / Flash / Plus).
+        // Llama 4 Scout è stato spento da Groq il 17/07/2026: il primo è il suo sostituto
+        // consigliato; gli altri restano come ripiego (si prova il successivo se un modello non esiste più).
+        const GROQ_VISION_MODELS = [
+            'qwen/qwen3.6-27b',
+            'meta-llama/llama-4-maverick-17b-128e-instruct',
+            'meta-llama/llama-4-scout-17b-16e-instruct'
+        ];
+        let groqVisionStart = 0; // ricorda l'ultimo modello che ha funzionato
         const PUTER_VISION_MODEL = 'gemini-3-flash-preview';
         const GROQ_CHAT_MODELS = {
             turbo: { model: 'openai/gpt-oss-20b', effort: false, fixedEffort: 'low' },
@@ -2759,11 +2783,31 @@ Rispondi SOLO con il titolo, nient'altro.`;
                 throw err;
             }
             const choice = data?.choices?.[0];
-            const content = choice?.message?.content?.trim() || '';
+            // i modelli Qwen possono mettere il ragionamento nel testo tra <think>…</think>: non va mostrato
+            const content = (choice?.message?.content || '')
+                .replace(/<think>[\s\S]*?<\/think>/gi, '')
+                .replace(/<think>[\s\S]*$/i, '')
+                .trim();
             if (!content && choice?.finish_reason === 'length') {
                 throw new Error("Il modello ha finito lo spazio a disposizione mentre ragionava. Abbassa l'impegno o riformula la domanda.");
             }
             return content;
+        }
+
+        async function callGroqVision({ messages, temperature = 0.4, max_tokens = 4096 }) {
+            let lastError;
+            for (let i = groqVisionStart; i < GROQ_VISION_MODELS.length; i++) {
+                try {
+                    const reply = await callGroqChatCompletion({ model: GROQ_VISION_MODELS[i], messages, temperature, max_tokens });
+                    groqVisionStart = i;
+                    return reply;
+                } catch (error) {
+                    lastError = error;
+                    if (!isModelUnavailableError(error)) throw error; // errore vero: non ha senso provare gli altri
+                    console.warn(`Modello con visione ${GROQ_VISION_MODELS[i]} non disponibile.`, error);
+                }
+            }
+            throw lastError;
         }
 
         // ── OpenRouter (Klaro Code) ──────────────────────────────────────
@@ -2949,6 +2993,7 @@ Rispondi SOLO con il titolo, nient'altro.`;
             });
             refreshMaxUI();
             renderEffort();
+            renderImageQuality();
         }
 
         function toggleModelMenu(event) {
@@ -3015,6 +3060,28 @@ Rispondi SOLO con il titolo, nient'altro.`;
         })();
 
         function modelSupportsEffort(model) { return !!GROQ_CHAT_MODELS[model]?.effort; }
+
+        // ── Qualità immagini ─────────────────────────────────────────────
+        // Di default Klaro Image usa un motore gratuito. Il modello Puter (Gemini Image) è molto
+        // più caro in crediti: si attiva solo da qui, e solo con Klaro Max.
+        let imageHQ = localStorage.getItem('klaro-image-hq') === '1';
+
+        function toggleImageQuality() {
+            if (!puterMaxActive) { openUpgradeModal(); return; }
+            imageHQ = !imageHQ;
+            localStorage.setItem('klaro-image-hq', imageHQ ? '1' : '0');
+            renderImageQuality();
+        }
+
+        function renderImageQuality() {
+            const row = document.getElementById('imageQualityRow');
+            const toggle = document.getElementById('imageQualityToggle');
+            if (!row || !toggle) return;
+            row.style.display = selectedModel === 'image' ? 'flex' : 'none';
+            const on = imageHQ && puterMaxActive;
+            toggle.classList.toggle('on', on);
+            toggle.setAttribute('aria-checked', String(on));
+        }
 
         function setEffort(value) {
             const n = parseInt(value, 10);
@@ -3419,17 +3486,16 @@ Rispondi SOLO con il titolo, nient'altro.`;
             }).filter((message) => Array.isArray(message.content) || message.content);
         }
 
-        async function describeImageWithVision(dataUrl, question, { skipGroq = false } = {}) {
+        async function describeImageWithVision(dataUrl, question, { skipGroq = false, priorError = null } = {}) {
             if (imageDescriptionCache.has(dataUrl)) return imageDescriptionCache.get(dataUrl);
             const prompt = 'Descrivi questa immagine nel dettaglio, in italiano: oggetti, persone, colori, disposizione. '
                 + 'Trascrivi fedelmente ogni testo, numero, codice o messaggio di errore visibile. '
                 + 'Non rispondere a domande: fai solo una descrizione accurata.'
                 + (question ? ` Contesto: l'utente ha chiesto "${question.slice(0, 300)}".` : '');
-            const attempts = [];
-            const tryGroq = async () => callGroqChatCompletion({
-                model: GROQ_VISION_MODEL,
+            const attempts = priorError ? [priorError] : [];
+            const tryGroq = async () => callGroqVision({
                 temperature: 0.2,
-                max_tokens: 1200,
+                max_tokens: 3000,
                 messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: dataUrl } }] }]
             });
             const tryPuter = async () => {
@@ -3437,10 +3503,10 @@ Rispondi SOLO con il titolo, nient'altro.`;
                 const response = await puter.ai.chat(prompt, dataUrl, false, { model: PUTER_VISION_MODEL });
                 return parsePuterChatResponse(response).text;
             };
-            // chi ha Klaro Max attivo preferisce il modello Puter, gli altri partono da Groq
+            // Prima Groq (nessun credito Puter); Puter solo come ripiego.
             const order = [];
             if (!skipGroq) order.push(tryGroq);
-            if (window.puter) (puterMaxActive ? order.unshift(tryPuter) : order.push(tryPuter));
+            if (window.puter) order.push(tryPuter);
             for (const attempt of order) {
                 try {
                     const text = (await attempt() || '').trim();
@@ -3450,7 +3516,8 @@ Rispondi SOLO con il titolo, nient'altro.`;
                     attempts.push(error);
                 }
             }
-            throw new Error('Al momento nessun modello con visione riesce a leggere la foto. Riprova tra poco.');
+            const reason = (attempts[attempts.length - 1]?.message || '').slice(0, 160);
+            throw new Error('Al momento nessun modello con visione riesce a leggere la foto.' + (reason ? ` (${reason})` : ''));
         }
 
         async function messagesWithImageDescription(messages, idx, options) {
@@ -3467,21 +3534,22 @@ Rispondi SOLO con il titolo, nient'altro.`;
             const imageIdx = latestImageIndex(messages);
             if (imageIdx !== -1) {
                 const textOnlyModel = ['maxchat', 'maxthink', 'code'].includes(selectedModel);
+                let visionError = null;
                 if (!textOnlyModel) {
                     try {
-                        const reply = await callGroqChatCompletion({
-                            model: GROQ_VISION_MODEL,
+                        const reply = await callGroqVision({
                             messages: messagesForVision(messages),
                             temperature: 0.6,
-                            max_tokens: 2048
+                            max_tokens: 4096
                         });
                         return reply || 'Nessuna risposta.';
                     } catch (error) {
                         if (!isModelUnavailableError(error)) throw error;
+                        visionError = error;
                         console.warn('Modello Groq con visione non disponibile, uso una descrizione.', error);
                     }
                 }
-                messages = await messagesWithImageDescription(messages, imageIdx, { skipGroq: !textOnlyModel });
+                messages = await messagesWithImageDescription(messages, imageIdx, { skipGroq: !textOnlyModel, priorError: visionError });
             }
             if (selectedModel === 'maxchat' || selectedModel === 'maxthink') {
                 if (!window.puter) throw new Error('Klaro Max non è disponibile al momento.');
@@ -3509,18 +3577,22 @@ Rispondi SOLO con il titolo, nient'altro.`;
         }
 
         async function translatePromptForImage(prompt) {
-            // I modelli di generazione immagini rendono molto meglio con
-            // prompt in inglese: qui traduciamo/espandiamo brevemente quello
-            // dell'utente (in qualsiasi lingua) prima di generare la foto.
+            // I modelli di generazione immagini rendono meglio con prompt in inglese.
+            // Si usa Groq (leggero, niente crediti Puter né finestra di accesso);
+            // se non risponde, si usa il testo originale.
             try {
-                if (window.puter) {
-                    const response = await puter.ai.chat([
-                        { role: 'system', content: 'Translate the user\'s image request into a short, vivid English prompt for an AI image generator. Keep all details, add none. Reply with ONLY the translated prompt, nothing else, no quotes.' },
-                        { role: 'user', content: prompt }
-                    ], false, { model: 'gemini-3-flash-preview' });
-                    const { text } = parsePuterChatResponse(response);
-                    if (text && text.trim()) return text.trim();
-                }
+                const translated = await callGroqChatCompletion({
+                    model: 'openai/gpt-oss-20b',
+                    reasoning_effort: 'low',
+                    temperature: 0.3,
+                    max_tokens: 300,
+                    messages: [
+                        { role: 'system', content: "Translate the user's image request into a short, vivid English prompt for an AI image generator. Keep all details, add none. Reply with ONLY the translated prompt, nothing else, no quotes." },
+                        { role: 'user', content: prompt.slice(0, 600) }
+                    ]
+                });
+                const clean = (translated || '').replace(/^["'«»]+|["'«»]+$/g, '').trim();
+                if (clean) return clean;
             } catch (error) {
                 console.warn('Traduzione prompt immagine fallita, uso il testo originale.', error);
             }
@@ -3545,29 +3617,41 @@ Rispondi SOLO con il titolo, nient'altro.`;
         }
 
         async function generateImageWithAI(prompt) {
-            // Klaro Image usa sempre Puter come motore principale (stessa qualità
-            // per tutti, Max o Free): se Puter non è disponibile o fallisce,
-            // si passa a Pollinations solo come riserva.
-            if (window.puter) {
+            // Predefinito: motore gratuito (Pollinations), nessun credito Puter.
+            // "Qualità superiore" (solo Max): modello Puter, che consuma molti crediti.
+            if (imageHQ && puterMaxActive && window.puter) {
                 try {
                     const imgEl = await puter.ai.txt2img(prompt, { model: PUTER_MODELS.image });
                     const src = imgEl?.src || mediaSourceFrom(imgEl);
                     if (src) return { url: src };
                 } catch (error) {
-                    console.warn('Generazione immagine con Puter fallita, uso il motore di riserva.', error);
+                    console.warn('Generazione immagine con Puter fallita, uso il motore gratuito.', error);
                 }
             }
-            // Riserva — Pollinations è un endpoint pubblico, l'immagine
-            // si genera direttamente nel browser dall'URL, nessuna chiave richiesta.
+            const encoded = encodeURIComponent(prompt.slice(0, 600));
             const params = new URLSearchParams({
                 width: '1024',
                 height: '1024',
                 nologo: 'true',
+                model: 'flux',
                 seed: String(Date.now() % 1000000)
             });
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${params.toString()}`;
-            await preloadImage(url);
-            return { url };
+            // Pollinations ha due indirizzi: si prova il primo e, se non risponde, il secondo.
+            const candidates = [
+                `https://image.pollinations.ai/prompt/${encoded}?${params.toString()}`,
+                `https://gen.pollinations.ai/image/${encoded}?${params.toString()}`
+            ];
+            let lastError;
+            for (const url of candidates) {
+                try {
+                    await preloadImage(url, 45000);
+                    return { url };
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw new Error((lastError?.message || 'Il servizio immagini non risponde.')
+                + (puterMaxActive ? ' Puoi anche attivare "Qualità superiore" dal menu dei modelli.' : ''));
         }
 
         // Renderer Markdown: titoli, elenchi (anche annidati), tabelle, citazioni, codice, link
