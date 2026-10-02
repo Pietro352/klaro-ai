@@ -2472,6 +2472,7 @@
                 <button type="button" role="menuitem" data-model="turbo" onclick="selectModel('turbo')"><span>Klaro Turbo</span><small>Il più rapido</small></button>
                 <button type="button" role="menuitem" data-model="light" onclick="selectModel('light')"><span>Klaro Flash</span><small>Veloce, gratis</small></button>
                 <button type="button" role="menuitem" data-model="plus" onclick="selectModel('plus')"><span>Klaro Plus</span><small>Più preciso</small></button>
+                <button type="button" role="menuitem" data-model="code" onclick="selectModel('code')"><span>Klaro Code</span><small>Per programmare</small></button>
                 <button type="button" role="menuitem" data-model="maxchat" onclick="selectModel('maxchat')"><span>Klaro Max <em class="max-badge">Max</em></span><small>Il più potente</small></button>
                 <button type="button" role="menuitem" data-model="maxthink" onclick="selectModel('maxthink')"><span>Klaro Max Think <em class="max-badge">Max</em></span><small>Ragiona passo passo</small></button>
                 <button type="button" role="menuitem" data-model="image" onclick="selectModel('image')"><span>Klaro Image</span><small>Genera immagini</small></button>
@@ -2523,7 +2524,7 @@
             <div class="quota-banner" id="quotaBanner" style="display:none">
                 <div class="quota-banner-text">
                     <strong>Gettoni esauriti su Klaro AI</strong>
-                    <p>Il budget stimato per questa sessione è finito. I modelli <b>Flash</b>, <b>Turbo</b> e <b>Plus</b> si ricaricano subito, <b>Max</b> e <b>Max Think</b> il mese successivo. Se il problema persiste o ti serve una mano, trovi assistenza qui:</p>
+                    <p>Il budget stimato per questa sessione è finito. I modelli <b>Flash</b>, <b>Turbo</b> e <b>Plus</b> si ricaricano subito, <b>Max</b> e <b>Max Think</b> il mese successivo; <b>Code</b> torna disponibile quando si ricaricano i crediti OpenRouter. Se il problema persiste o ti serve una mano, trovi assistenza qui:</p>
                     <a href="https://buymeacoffee.com/happydev" target="_blank" rel="noopener">buymeacoffee.com/happydev</a>
                 </div>
                 <button type="button" class="quota-banner-close" onclick="document.getElementById('quotaBanner').style.display='none'" aria-label="Chiudi">✕</button>
@@ -2682,12 +2683,15 @@
         // GROQ_API_KEY del repository (vedi README). In locale resta il
         // placeholder e le chiamate falliscono con un errore chiaro.
         const GROQ_API_KEY = '__GROQ_API_KEY__';
-        // turbo = il più leggero (niente ragionamento); light = Flash; plus = il più grande.
-        // "effort: true" = il modello accetta reasoning_effort (low / medium / high).
+        // turbo = gpt-oss-20b sempre al minimo ragionamento; light = Flash, impegno regolabile;
+        // plus = il modello più grande. "effort: true" = l'impegno si regola con lo slider.
+        // "fallback" = se Groq risponde che il modello non esiste / non è accessibile
+        // con la tua chiave, si riprova in automatico con quello indicato.
+        const GROQ_FALLBACK_MODEL = 'openai/gpt-oss-20b';
         const GROQ_CHAT_MODELS = {
-            turbo: { model: 'llama-3.1-8b-instant', effort: false },
+            turbo: { model: 'openai/gpt-oss-20b', effort: false, fixedEffort: 'low' },
             light: { model: 'openai/gpt-oss-20b', effort: true },
-            plus: { model: 'openai/gpt-oss-120b', effort: true }
+            plus: { model: 'openai/gpt-oss-120b', effort: true, fallback: GROQ_FALLBACK_MODEL }
         };
         const GROQ_TITLE_SYSTEM_PROMPT = `Genera un titolo brevissimo (massimo 4 parole, in italiano) che riassuma
 l'argomento del messaggio dell'utente, come farebbe la cronologia di una chat.
@@ -2698,7 +2702,12 @@ Esempi:
 "aiutami a scrivere una mail al capo" -> Email al capo
 Rispondi SOLO con il titolo, nient'altro.`;
 
-        async function callGroqChatCompletion({ model, reasoning_effort, messages, temperature = 0.7, max_tokens = 2048 }) {
+        function isModelUnavailableError(err) {
+            const msg = (err?.message || '').toLowerCase();
+            return err?.status === 404 || /does not exist|do not have access|model_not_found|decommission|deprecated/.test(msg);
+        }
+
+        async function callGroqChatCompletion({ model, reasoning_effort, messages, temperature = 0.7, max_tokens = 2048, fallback }) {
             if (!GROQ_API_KEY || GROQ_API_KEY === '__GROQ_API_KEY__') {
                 throw new Error('GROQ_API_KEY non configurata. Aggiungi il secret GROQ_API_KEY nei GitHub Secrets del repo.');
             }
@@ -2716,6 +2725,10 @@ Rispondi SOLO con il titolo, nient'altro.`;
             if (!response.ok) {
                 const err = new Error(data?.error?.message || 'Errore dal servizio Groq');
                 err.status = response.status;
+                if (fallback && fallback !== model && isModelUnavailableError(err)) {
+                    console.warn(`Modello ${model} non disponibile, riprovo con ${fallback}.`, err);
+                    return callGroqChatCompletion({ model: fallback, reasoning_effort, messages, temperature, max_tokens });
+                }
                 throw err;
             }
             const choice = data?.choices?.[0];
@@ -2726,7 +2739,48 @@ Rispondi SOLO con il titolo, nient'altro.`;
             return content;
         }
 
-        const VALID_MODELS = ['light', 'turbo', 'plus', 'maxchat', 'maxthink', 'image'];
+        // ── OpenRouter (Klaro Code) ──────────────────────────────────────
+        // Come per Groq, la chiave NON va scritta qui: viene iniettata al deploy
+        // dal secret OPENROUTER_API_KEY. In locale resta il placeholder.
+        // Attenzione: in una pagina statica la chiave è leggibile da chiunque apra
+        // il sorgente, quindi imposta un limite di spesa sulla chiave da openrouter.ai.
+        const OPENROUTER_API_KEY = '__OPENROUTER_API_KEY__';
+        const OPENROUTER_CODE_MODEL = 'qwen/qwen3-coder';
+
+        async function callOpenRouterChatCompletion({ model, messages, temperature = 0.3, max_tokens = 4096 }) {
+            if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === '__OPENROUTER_API_KEY__') {
+                throw new Error('OPENROUTER_API_KEY non configurata. Aggiungi il secret OPENROUTER_API_KEY nei GitHub Secrets del repo.');
+            }
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+                    'HTTP-Referer': location.origin && location.origin !== 'null' ? location.origin : 'https://klaro.ai',
+                    'X-Title': 'Klaro AI'
+                },
+                body: JSON.stringify({ model, messages, temperature, max_tokens })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const err = new Error(data?.error?.message || 'Errore dal servizio Klaro Code');
+                err.status = response.status;
+                throw err;
+            }
+            if (data?.error) {
+                const err = new Error(data.error.message || 'Errore dal servizio Klaro Code');
+                err.status = data.error.code;
+                throw err;
+            }
+            const choice = data?.choices?.[0];
+            const content = (typeof choice?.message?.content === 'string' ? choice.message.content : '').trim();
+            if (!content && choice?.finish_reason === 'length') {
+                throw new Error('La risposta è stata troncata prima di iniziare. Riprova con una richiesta più breve.');
+            }
+            return content;
+        }
+
+        const VALID_MODELS = ['light', 'turbo', 'plus', 'code', 'maxchat', 'maxthink', 'image'];
         let storedModel = localStorage.getItem('klaro-selected-model');
         if (storedModel === 'pro') storedModel = 'maxchat'; // migrazione da versione precedente
         let selectedModel = VALID_MODELS.includes(storedModel) ? storedModel : 'light';
@@ -2757,9 +2811,10 @@ Rispondi SOLO con il titolo, nient'altro.`;
 
             try {
                 const raw = await callGroqChatCompletion({
-                    model: 'llama-3.1-8b-instant',
+                    model: 'openai/gpt-oss-20b',
+                    reasoning_effort: 'low',
                     temperature: 0.4,
-                    max_tokens: 24,
+                    max_tokens: 80,
                     messages: [
                         { role: 'system', content: GROQ_TITLE_SYSTEM_PROMPT },
                         { role: 'user', content: cleanQuestion.slice(0, 500) }
@@ -2858,7 +2913,7 @@ Rispondi SOLO con il titolo, nient'altro.`;
         }
 
         function renderModelTier() {
-            const labels = { light: 'Flash', turbo: 'Turbo', plus: 'Plus', maxchat: 'Max', maxthink: 'Max Think', image: 'Image' };
+            const labels = { light: 'Flash', turbo: 'Turbo', plus: 'Plus', code: 'Code', maxchat: 'Max', maxthink: 'Max Think', image: 'Image' };
             modelTierLabel.textContent = labels[selectedModel];
             modelTierToggle.classList.toggle('pro', selectedModel === 'maxchat' || selectedModel === 'maxthink');
             modelTierToggle.title = `Modello attivo: Klaro ${labels[selectedModel]}`;
@@ -2956,10 +3011,12 @@ Rispondi SOLO con il titolo, nient'altro.`;
             } else {
                 valueEl.textContent = '—';
                 hintEl.textContent = selectedModel === 'turbo'
-                    ? "Turbo risponde subito, senza ragionamento: l'impegno non si regola."
+                    ? "Turbo usa sempre il minimo ragionamento: l'impegno non si regola."
                     : selectedModel === 'image'
                         ? 'Non disponibile per la generazione di immagini.'
-                        : "Klaro Max regola l'impegno da solo.";
+                        : selectedModel === 'code'
+                            ? "Klaro Code regola l'impegno da solo."
+                            : "Klaro Max regola l'impegno da solo.";
             }
         }
 
@@ -3201,7 +3258,9 @@ Rispondi SOLO con il titolo, nient'altro.`;
             const usedPct = unlimited ? 0 : Math.round(((RATE_LIMIT_MAX - remaining) / RATE_LIMIT_MAX) * 100);
             const level = usedPct <= 33 ? 'basso' : usedPct <= 66 ? 'medio' : 'alto';
             const tip = unlimited
-                ? 'Questo modello non ha un limite di richieste al minuto gestito da noi (dipende dal tuo account Puter).'
+                ? (selectedModel === 'code'
+                    ? 'Klaro Code non ha un limite di richieste al minuto gestito da noi: consuma i crediti della chiave OpenRouter.'
+                    : 'Questo modello non ha un limite di richieste al minuto gestito da noi (dipende dal tuo account Puter).')
                 : `${remaining}/${RATE_LIMIT_MAX} richieste disponibili in questo minuto su Klaro Flash, Turbo e Plus. Si ricarica da sola, un po' alla volta, ogni 60 secondi.`;
             const warn = !unlimited && remaining <= 6 && remaining > 2;
             const critical = !unlimited && remaining <= 2;
@@ -3209,7 +3268,7 @@ Rispondi SOLO con il titolo, nient'altro.`;
             const row = document.getElementById('usageRow');
             const label = document.getElementById('usageLabel');
             const fill = document.getElementById('usageFill');
-            if (label) label.textContent = unlimited ? 'non limitato' : level;
+            if (label) label.textContent = unlimited ? (selectedModel === 'code' ? 'a consumo' : 'non limitato') : level;
             if (fill) fill.style.width = usedPct + '%';
             if (row) {
                 row.classList.toggle('warn', warn);
@@ -3290,12 +3349,18 @@ Rispondi SOLO con il titolo, nient'altro.`;
                 lastReasoning = selectedModel === 'maxthink' ? reasoning : '';
                 return text || 'Nessuna risposta.';
             }
+            if (selectedModel === 'code') {
+                const reply = await callOpenRouterChatCompletion({ model: OPENROUTER_CODE_MODEL, messages: cleanMessagesFor(messages) });
+                return reply || 'Nessuna risposta.';
+            }
             const cleanMessages = cleanMessagesFor(messages);
             const cfg = GROQ_CHAT_MODELS[GROQ_CHAT_MODELS[selectedModel] ? selectedModel : 'light'];
-            const request = { model: cfg.model, messages: cleanMessages };
+            const request = { model: cfg.model, fallback: cfg.fallback, messages: cleanMessages };
             if (cfg.effort) {
                 request.reasoning_effort = EFFORT_LEVELS[effortIndex];
                 request.max_tokens = EFFORT_MAX_TOKENS[effortIndex];
+            } else if (cfg.fixedEffort) {
+                request.reasoning_effort = cfg.fixedEffort;
             }
             const reply = await callGroqChatCompletion(request);
             return reply || 'Nessuna risposta.';
