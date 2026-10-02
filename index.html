@@ -2187,6 +2187,23 @@
         .usage-row.critical .usage-bar i { background: #ef4444; }
         @media (prefers-reduced-motion: reduce) { .usage-bar i { transition: none; } }
 
+        /* ── Trascina un file sulla pagina per allegarlo ── */
+        .drop-overlay {
+            position: fixed; inset: 0; z-index: 300;
+            display: none; align-items: center; justify-content: center;
+            padding: 24px; background: rgba(8, 10, 18, 0.78);
+            pointer-events: none;
+        }
+        .drop-overlay.show { display: flex; }
+        .drop-overlay-box {
+            display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+            width: min(420px, 100%); padding: 44px 24px;
+            border: 2px dashed #819bff; border-radius: 22px;
+            background: rgba(129, 155, 255, 0.08); color: #f1f1f5;
+        }
+        .drop-overlay-box strong { font-size: 1.15rem; font-weight: 600; }
+        .drop-overlay-box span { font-size: .85rem; color: #a3a4b0; }
+
         .modal-backdrop {
             position: fixed; inset: 0; background: rgba(5, 5, 10, 0.72); backdrop-filter: blur(6px);
             display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
@@ -2585,6 +2602,13 @@
         <div class="footer">Klaro può commettere errori. Verifica sempre le informazioni importanti.</div>
     </div>
 
+    <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+        <div class="drop-overlay-box">
+            <strong>Rilascia per allegare</strong>
+            <span>Foto, file di testo o codice</span>
+        </div>
+    </div>
+
     <!-- ── Modale upgrade a Max ─────────────────────────────────────── -->
     <div class="modal-backdrop" id="upgradeModal" onclick="handleModalBackdrop(event, 'upgradeModal')">
         <div class="modal-box" onclick="event.stopPropagation()">
@@ -2688,6 +2712,9 @@
         // "fallback" = se Groq risponde che il modello non esiste / non è accessibile
         // con la tua chiave, si riprova in automatico con quello indicato.
         const GROQ_FALLBACK_MODEL = 'openai/gpt-oss-20b';
+        // Modello Groq con visione, usato quando nella chat c'è una foto (Turbo / Flash / Plus).
+        const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+        const PUTER_VISION_MODEL = 'gemini-3-flash-preview';
         const GROQ_CHAT_MODELS = {
             turbo: { model: 'openai/gpt-oss-20b', effort: false, fixedEffort: 'low' },
             light: { model: 'openai/gpt-oss-20b', effort: true },
@@ -3340,7 +3367,122 @@ Rispondi SOLO con il titolo, nient'altro.`;
             return { text: text.trim(), reasoning: reasoning.trim() };
         }
 
+        // ── Foto nella conversazione ──────────────────────────────────────
+        // Prima cleanMessagesFor() buttava via le immagini e il modello vedeva solo "cos'è?".
+        // Ora: Turbo / Flash / Plus rispondono con un modello Groq che vede le foto;
+        // Max, Max Think e Code (che leggono solo testo) ricevono una descrizione accurata
+        // dell'immagine generata da un modello con visione.
+        const IMAGE_CONTEXT_WINDOW = 8; // la foto resta "visibile" per i messaggi successivi
+        const imageDescriptionCache = new Map();
+
+        function imageParts(message) {
+            return Array.isArray(message?.content)
+                ? message.content.filter((part) => part?.type === 'image_url' && part.image_url?.url)
+                : [];
+        }
+
+        function textOfMessage(message) {
+            return Array.isArray(message?.content)
+                ? message.content.map((part) => part?.text || '').filter(Boolean).join('\n')
+                : String(message?.content || '');
+        }
+
+        function isImagePlaceholder(text) {
+            return !text.trim() || /^\[(Immagine allegata|Screenshot catturato)/i.test(text.trim());
+        }
+
+        function latestImageIndex(messages) {
+            let seen = 0;
+            for (let i = messages.length - 1; i >= 0 && seen < IMAGE_CONTEXT_WINDOW; i--) {
+                if (messages[i].role === 'system') continue;
+                seen++;
+                if (imageParts(messages[i]).length) return i;
+            }
+            return -1;
+        }
+
+        function messagesForVision(messages) {
+            const idx = latestImageIndex(messages);
+            return messages.map((message, i) => {
+                const role = ['system', 'assistant', 'user'].includes(message.role) ? message.role : 'user';
+                const text = textOfMessage(message).trim();
+                if (i === idx) {
+                    return {
+                        role,
+                        content: [
+                            { type: 'text', text: isImagePlaceholder(text) ? 'Descrivi cosa vedi in questa immagine.' : text },
+                            ...imageParts(message).slice(0, 1)
+                        ]
+                    };
+                }
+                return { role, content: text };
+            }).filter((message) => Array.isArray(message.content) || message.content);
+        }
+
+        async function describeImageWithVision(dataUrl, question, { skipGroq = false } = {}) {
+            if (imageDescriptionCache.has(dataUrl)) return imageDescriptionCache.get(dataUrl);
+            const prompt = 'Descrivi questa immagine nel dettaglio, in italiano: oggetti, persone, colori, disposizione. '
+                + 'Trascrivi fedelmente ogni testo, numero, codice o messaggio di errore visibile. '
+                + 'Non rispondere a domande: fai solo una descrizione accurata.'
+                + (question ? ` Contesto: l'utente ha chiesto "${question.slice(0, 300)}".` : '');
+            const attempts = [];
+            const tryGroq = async () => callGroqChatCompletion({
+                model: GROQ_VISION_MODEL,
+                temperature: 0.2,
+                max_tokens: 1200,
+                messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: dataUrl } }] }]
+            });
+            const tryPuter = async () => {
+                if (!window.puter) throw new Error('Puter non disponibile');
+                const response = await puter.ai.chat(prompt, dataUrl, false, { model: PUTER_VISION_MODEL });
+                return parsePuterChatResponse(response).text;
+            };
+            // chi ha Klaro Max attivo preferisce il modello Puter, gli altri partono da Groq
+            const order = [];
+            if (!skipGroq) order.push(tryGroq);
+            if (window.puter) (puterMaxActive ? order.unshift(tryPuter) : order.push(tryPuter));
+            for (const attempt of order) {
+                try {
+                    const text = (await attempt() || '').trim();
+                    if (text) { imageDescriptionCache.set(dataUrl, text); return text; }
+                } catch (error) {
+                    console.warn('Descrizione immagine non riuscita', error);
+                    attempts.push(error);
+                }
+            }
+            throw new Error('Al momento nessun modello con visione riesce a leggere la foto. Riprova tra poco.');
+        }
+
+        async function messagesWithImageDescription(messages, idx, options) {
+            const target = messages[idx];
+            const original = textOfMessage(target).trim();
+            const description = await describeImageWithVision(imageParts(target)[0].image_url.url, isImagePlaceholder(original) ? '' : original, options);
+            const question = isImagePlaceholder(original) ? 'Descrivi cosa vedi in questa immagine.' : original;
+            return messages.map((message, i) => i === idx
+                ? { role: message.role, content: `${question}\n\n[Descrizione automatica della foto allegata dall'utente]\n${description}` }
+                : message);
+        }
+
         async function chatWithAI(messages) {
+            const imageIdx = latestImageIndex(messages);
+            if (imageIdx !== -1) {
+                const textOnlyModel = ['maxchat', 'maxthink', 'code'].includes(selectedModel);
+                if (!textOnlyModel) {
+                    try {
+                        const reply = await callGroqChatCompletion({
+                            model: GROQ_VISION_MODEL,
+                            messages: messagesForVision(messages),
+                            temperature: 0.6,
+                            max_tokens: 2048
+                        });
+                        return reply || 'Nessuna risposta.';
+                    } catch (error) {
+                        if (!isModelUnavailableError(error)) throw error;
+                        console.warn('Modello Groq con visione non disponibile, uso una descrizione.', error);
+                    }
+                }
+                messages = await messagesWithImageDescription(messages, imageIdx, { skipGroq: !textOnlyModel });
+            }
             if (selectedModel === 'maxchat' || selectedModel === 'maxthink') {
                 if (!window.puter) throw new Error('Klaro Max non è disponibile al momento.');
                 const cleanMessages = cleanMessagesFor(messages);
@@ -3654,29 +3796,127 @@ Rispondi SOLO con il titolo, nient'altro.`;
             renderAttachPreview();
         }
 
+        const MAX_IMAGE_MB = 15;
+        const MAX_TEXT_FILE_MB = 2;
+        const MAX_TEXT_CHARS = 60000;
+        const TEXT_EXTENSIONS = ['txt','md','csv','tsv','json','xml','html','htm','css','js','mjs','ts','tsx','jsx','py','java','c','h','cpp','hpp','cs','go','rs','php','rb','kt','swift','sh','bat','ps1','sql','yml','yaml','toml','ini','cfg','conf','env','log','ino','lua','r','dart','vue','svelte','svg','tex'];
+
+        function isTextLikeFile(file) {
+            const type = (file.type || '').toLowerCase();
+            if (type.startsWith('text/') || /json|xml|javascript|x-sh|yaml|csv|svg/.test(type)) return true;
+            const ext = (file.name.split('.').pop() || '').toLowerCase();
+            return file.name.includes('.') && TEXT_EXTENSIONS.includes(ext);
+        }
+
+        function readFileAs(file, mode) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error || new Error('Lettura del file non riuscita'));
+                if (mode === 'text') reader.readAsText(file); else reader.readAsDataURL(file);
+            });
+        }
+
+        // Le foto vengono ridotte (max 1280 px, JPEG): restano leggibili ma pesano poco,
+        // così i modelli le accettano senza superare i limiti di dimensione.
+        function downscaleImage(dataUrl, maxSide = 1280, quality = 0.85) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+                    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+                    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    try { resolve(canvas.toDataURL('image/jpeg', quality)); } catch (error) { reject(error); }
+                };
+                img.onerror = () => reject(new Error('Immagine non leggibile'));
+                img.src = dataUrl;
+            });
+        }
+
+        async function processFile(file) {
+            if (!file) return;
+            if (processing) { showToast('Aspetta che Klaro finisca di rispondere, poi allega il file.'); return; }
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            try {
+                if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+                    if (file.size > MAX_IMAGE_MB * 1024 * 1024) { showToast(`Immagine troppo grande (max ${MAX_IMAGE_MB} MB).`); return; }
+                    const raw = await readFileAs(file, 'dataurl');
+                    let dataUrl;
+                    try { dataUrl = await downscaleImage(raw); }
+                    catch (error) { showToast('Non riesco ad aprire questa immagine. Prova con JPG, PNG o WebP.'); return; }
+                    pendingAttachment = { dataUrl, name: file.name, sizeMB, isImage: true };
+                } else if (isTextLikeFile(file)) {
+                    if (file.size > MAX_TEXT_FILE_MB * 1024 * 1024) { showToast(`File troppo grande (max ${MAX_TEXT_FILE_MB} MB).`); return; }
+                    let text = await readFileAs(file, 'text');
+                    if (text.length > MAX_TEXT_CHARS) {
+                        text = text.slice(0, MAX_TEXT_CHARS) + '\n…[file troncato]';
+                        showToast(`File lungo: ho incluso solo i primi ${MAX_TEXT_CHARS.toLocaleString('it-IT')} caratteri.`);
+                    }
+                    pendingAttachment = { textContent: text, name: file.name, sizeMB, isImage: false };
+                } else {
+                    showToast('Formato non supportato: allega foto o file di testo/codice.');
+                    return;
+                }
+            } catch (error) {
+                console.warn('Allegato non caricato', error);
+                showToast('Impossibile leggere il file.');
+                return;
+            }
+            renderAttachPreview();
+            userInput.focus();
+        }
+
         function handleFileUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
-            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-            const reader = new FileReader();
-
-            if (file.type.startsWith('image/')) {
-                reader.onload = function(e) {
-                    pendingAttachment = { dataUrl: e.target.result, name: file.name, sizeMB, isImage: true };
-                    renderAttachPreview();
-                    userInput.focus();
-                };
-                reader.readAsDataURL(file);
-            } else {
-                reader.onload = function(e) {
-                    pendingAttachment = { textContent: e.target.result, name: file.name, sizeMB, isImage: false };
-                    renderAttachPreview();
-                    userInput.focus();
-                };
-                reader.readAsText(file);
-            }
             event.target.value = '';
+            processFile(file);
         }
+
+        // ── Trascina e rilascia (e incolla) ──
+        (function setupDropZone() {
+            const overlay = document.getElementById('dropOverlay');
+            let depth = 0;
+            const hasFiles = (event) => Array.from(event.dataTransfer?.types || []).includes('Files');
+            document.addEventListener('dragenter', (event) => {
+                if (!hasFiles(event)) return;
+                event.preventDefault();
+                depth++;
+                overlay.classList.add('show');
+            });
+            document.addEventListener('dragover', (event) => {
+                if (!hasFiles(event)) return;
+                event.preventDefault(); // senza questo il browser apre il file invece di passarlo alla pagina
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            document.addEventListener('dragleave', (event) => {
+                if (!hasFiles(event)) return;
+                depth = Math.max(0, depth - 1);
+                if (!depth) overlay.classList.remove('show');
+            });
+            document.addEventListener('drop', (event) => {
+                if (!hasFiles(event)) return;
+                event.preventDefault();
+                depth = 0;
+                overlay.classList.remove('show');
+                const files = Array.from(event.dataTransfer.files || []);
+                if (!files.length) return;
+                if (files.length > 1) showToast(`Si allega un file alla volta: ho preso "${files[0].name}".`);
+                processFile(files[0]);
+            });
+            window.addEventListener('blur', () => { depth = 0; overlay.classList.remove('show'); });
+            document.addEventListener('paste', (event) => {
+                const image = Array.from(event.clipboardData?.files || []).find((f) => f.type.startsWith('image/'));
+                if (!image) return;
+                event.preventDefault();
+                processFile(image);
+            });
+        })();
 
         function switchTab(mode) {
             if (processing) return;
@@ -4076,7 +4316,8 @@ Rispondi SOLO con il titolo, nient'altro.`;
             }
         }
 
-        function attachScreenshot(dataUrl) {
+        async function attachScreenshot(rawDataUrl) {
+            const dataUrl = await downscaleImage(rawDataUrl).catch(() => rawDataUrl);
             addMessage('user', '[screenshot] Schermata catturata', `<br><img src="${dataUrl}" style="max-width:220px; border-radius:8px; margin-top:8px;">`);
             conversationHistory.push({
                 role: 'user',
